@@ -57,12 +57,14 @@ The extension is intentionally restricted to pages served from `localhost` or `1
 
 Use only the included fictional examples and synthetic values. Do not enter real passwords or personal information into the demo forms.
 
-### Troubleshooting
+### Common setup questions
 
-- **Chrome says the manifest is missing:** In **Load unpacked**, select the `src/` folder itself, not the repository root.
-- **The safety button does not appear:** Make sure the page address starts with `http://127.0.0.1:8000/` or `http://localhost:8000/`, then reload the page.
-- **A code change is not visible:** Open `chrome://extensions`, select the extension's reload icon, and reload the sample page.
-- **The sample page will not open:** Check that the Python server is still running in Terminal and that the command was started from the project folder.
+- **Why do I get a 404 for `site-warning.html`?** The server may be serving the wrong folder. From the project root (the folder containing `samples/`), run `python3 -m http.server 8000 --bind 127.0.0.1 --directory samples`, then open `http://127.0.0.1:8000/site-warning.html`. If your Terminal is already inside `samples/`, run `python3 -m http.server 8000 --bind 127.0.0.1` instead. Do not add `--directory samples` a second time.
+- **Why can’t I connect to `127.0.0.1:8000`?** Keep the Python server running in its Terminal window and open the address on the same computer. `127.0.0.1` always refers to the computer making the request. Another person should run the project on their own computer.
+- **Why does the page load but the safety button is missing?** The extension runs only on pages served from `localhost` or `127.0.0.1`, not on `file://` pages or ordinary websites. Confirm the extension is enabled in `chrome://extensions`, then reload the page.
+- **Why does Chrome say the manifest is missing?** In **Load unpacked**, choose the `src/` folder itself—the folder containing `manifest.json`—not the repository root.
+- **How do I apply an extension code change?** Open `chrome://extensions`, select the extension’s reload icon, and reload the sample page.
+- **What if the demo stops responding?** Check that the Python server is still running in Terminal. If needed, stop it with **Ctrl+C** and restart it using the command that matches your current folder, as described above.
 
 ## Privacy
 
