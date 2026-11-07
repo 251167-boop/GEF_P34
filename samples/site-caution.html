@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI WebShield — Caution Fixture</title>
+  <style>body{max-width:700px;margin:2rem auto;padding:0 1rem;font:16px/1.5 system-ui,sans-serif;color:#202124}.notice{padding:1rem;background:#fff2cc;border-left:4px solid #d6a100}label{display:block;margin:.8rem 0 .2rem;font-weight:600}input{box-sizing:border-box;width:100%;padding:.65rem}button{margin-top:1rem;padding:.65rem 1rem}</style>
+</head>
+<body data-webshield-demo-case="caution" data-webshield-demo-url="https://classroom-check.example.test/login">
+  <h1>Fictional school portal sign-in</h1>
+  <p class="notice"><strong>Caution fixture.</strong> This unfamiliar sample page requests login details. The request alone is not proof of phishing.</p>
+  <p>Sample URL label: <code>https://school-portal.example.test/login</code></p>
+  <form id="demo-form">
+    <label for="user">Synthetic username</label><input id="user" autocomplete="off" placeholder="student@example.invalid">
+    <label for="password">Synthetic password (must be ignored)</label><input id="password" type="password" autocomplete="new-password" placeholder="Never enter a real password">
+    <button type="submit">Test local form handling</button>
+  </form>
+  <p id="result" role="status" aria-live="polite"></p>
+  <p><a href="site-warning.html">Back to local test fixtures</a></p>
+  <script>document.getElementById('demo-form').addEventListener('submit',(event)=>{event.preventDefault();document.getElementById('result').textContent='Local demo only: form submission was stopped; no data was sent.';});</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI WebShield — Local Privacy Demo</title>
+  <style>
+    body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #202124; font: 16px/1.5 system-ui, sans-serif; }
+    .notice { padding: 1rem; background: #fff2cc; border-left: 4px solid #d6a100; }
+    label { display: block; margin: 1rem 0 .3rem; font-weight: 600; }
+    input, textarea { box-sizing: border-box; width: 100%; padding: .7rem; }
+    button { margin-top: 1rem; padding: .7rem 1rem; }
+    #result { min-height: 1.5rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>AI WebShield local privacy demo</h1>
+  <p class="notice"><strong>Test page only.</strong> Use synthetic values from <code>tests/manual-test-cases.md</code>. Nothing entered here is sent anywhere.</p>
+  <form id="demo-form">
+    <label for="message">Message to a study helper</label>
+    <textarea id="message" name="message" rows="4" placeholder="Try ordinary text or a reserved fake value such as student@example.invalid"></textarea>
+
+    <label for="fake-id">Fake identifier fixture</label>
+    <input id="fake-id" name="fake-id" type="text" autocomplete="off" placeholder="Use FAKE-HKID-001 only">
+
+    <label for="secret">Password field (must be ignored by WebShield)</label>
+    <input id="secret" name="secret" type="password" autocomplete="new-password" placeholder="Synthetic test value only">
+
+    <button type="submit">Run local demo submit</button>
+  </form>
+  <p id="result" role="status" aria-live="polite"></p>
+  <script>
+    document.getElementById('demo-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      document.getElementById('result').textContent = 'Local demo only: submission was stopped here; no data was sent.';
+    });
+  </script>
+</body>
+</html>

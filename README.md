@@ -1,2 +1,62 @@
-# GEF_P34
-AI WebShield is a Chrome extension prototype that helps students spot privacy and website safety risks. It checks supported form text locally, skips passwords, and displays explainable green, yellow, or red signals on demo pages. Reports stay in browser storage. Localhost demo only; not live phishing protection.
+# AI WebShield — Junior Secondary Edition
+
+AI WebShield is a student-built Chrome extension prototype that demonstrates two online-safety ideas: pausing before sharing possible personal information, and checking a page when there is a clear reason for caution. It uses browser-local, explainable rules and fictional sample pages to make its behavior easy to demonstrate.
+
+> **Prototype scope:** This build works only on the included sample pages served from `localhost` or `127.0.0.1`. It is not a live phishing detector, does not protect arbitrary websites, and does not connect to a Jetson AGX Orin server or remote threat-intelligence service.
+
+## Features
+
+- **Privacy review before form submission:** Checks supported non-password text fields for email addresses, eight-digit number-like strings, and a synthetic HKID-style demo marker.
+- **Student-controlled masking:** Shows the detected categories and offers a suggested mask. Students can apply or undo masks, continue with the original text, or cancel submission. The extension does not silently change text.
+- **Password-field exclusion:** Password field values are skipped and are never read by the privacy-pattern checker.
+- **Website safety signal:** A floating green, yellow, or red button appears at the bottom-right of demo pages. Green and yellow explanations briefly appear, then can be reopened by clicking the button. A red signal opens a warning with a Go back option.
+- **Demo blacklist and reporting:** Fictional reserved `.test` hostnames are included as blacklist examples. A reported hostname is saved in Chrome's local extension storage on the current browser.
+
+## How it works
+
+The extension uses Chrome Manifest V3. Its content script runs only on pages served from `localhost` and `127.0.0.1`, as restricted in [`src/manifest.json`](src/manifest.json). Form-text checks and page-risk rules run in the browser. The demo does not send form content or reports to a server.
+
+The traffic-light signal is a teaching aid, not a guarantee. An unfamiliar page requesting contact or sign-in information may receive yellow; red is reserved for the demo's explicit blacklist or other configured high-risk sample signals. The examples use fictional hostnames and synthetic data.
+
+## Install the extension locally
+
+1. Download or clone this repository.
+2. Open `chrome://extensions` in Chrome.
+3. Turn on **Developer mode**.
+4. Choose **Load unpacked** and select the repository's `src/` folder.
+5. Keep the extension's site access limited to `localhost` and `127.0.0.1` for this demo.
+
+## Run the sample pages
+
+From the repository root, start a local server bound to your own computer:
+
+```sh
+python3 -m http.server 8000 --bind 127.0.0.1 --directory samples
+```
+
+Then open `http://127.0.0.1:8000/site-warning.html` in Chrome and select a scenario. Reload a page after installing or reloading the extension. Only use the included fictional examples and synthetic values; never enter real passwords or personal information into demo forms.
+
+## Privacy
+
+- Form values are checked in the browser and are not sent to a remote service.
+- Password values are not inspected.
+- The extension does not persistently store entered form text.
+- When a user reports a page, only its hostname is stored in Chrome local extension storage on that device. Reports are not shared or uploaded.
+- The extension requests localhost host access for the demo and the `storage` permission for the local report list.
+
+## Project contents
+
+- [`src/`](src/) — unpacked Chrome extension.
+- [`samples/`](samples/) — fictional localhost demo pages.
+- [`tests/manual-test-cases.md`](tests/manual-test-cases.md) — manual scenarios and expected behavior.
+- [`docs/`](docs/) — project scope, architecture notes, implementation records, QA status, and the formatted submission report.
+- [`output/pdf/ai-webshield-project-poster.pdf`](output/pdf/ai-webshield-project-poster.pdf) — project poster.
+- [`output/ai-webshield-source.zip`](output/ai-webshield-source.zip) — packaged source and project materials.
+
+## Limitations and next steps
+
+The rules are small and explainable, but they may miss threats or produce false alarms. No detection accuracy or false-positive/false-negative rate has been measured, and interactive Chrome QA remains pending. The original proposal describes a Jetson AGX Orin local server and AI-assisted analysis; these are future ideas and are not implemented in this prototype. Before expanding coverage, test the extension with synthetic data, document observed results, and review permissions and privacy requirements.
+
+## License
+
+No license has been specified yet. Ask the project owner before reusing or redistributing this work.

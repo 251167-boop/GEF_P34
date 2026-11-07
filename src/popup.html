@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI WebShield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <div class="heading">
+      <span class="status-dot" aria-hidden="true"></span>
+      <div>
+        <h1>AI WebShield</h1>
+        <p class="subtitle">Local demo</p>
+      </div>
+    </div>
+    <p id="status" role="status" aria-live="polite">Checking this tab…</p>
+    <section class="privacy">
+      <h2>Privacy in this prototype</h2>
+      <ul>
+        <li>Checks run in this browser tab.</li>
+        <li>Password fields are skipped.</li>
+        <li>Text is not sent or persistently stored; originals stay in memory while you review.</li>
+      </ul>
+    </section>
+    <p class="limit">This demo only runs on localhost sample pages. No warning is a guarantee that a site is safe.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
