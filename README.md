@@ -18,23 +18,51 @@ The extension uses Chrome Manifest V3. Its content script runs only on pages ser
 
 The traffic-light signal is a teaching aid, not a guarantee. An unfamiliar page requesting contact or sign-in information may receive yellow; red is reserved for the demo's explicit blacklist or other configured high-risk sample signals. The examples use fictional hostnames and synthetic data.
 
-## Install the extension locally
+## Setup procedure
 
-1. Download or clone this repository.
-2. Open `chrome://extensions` in Chrome.
-3. Turn on **Developer mode**.
-4. Choose **Load unpacked** and select the repository's `src/` folder.
-5. Keep the extension's site access limited to `localhost` and `127.0.0.1` for this demo.
+### Requirements
 
-## Run the sample pages
+- Google Chrome (the extension uses Chrome Manifest V3).
+- Python 3, used only to serve the included sample pages locally.
+- A copy of this repository on your computer. You can download the repository ZIP from GitHub and extract it, or clone it with Git:
 
-From the repository root, start a local server bound to your own computer:
+  ```sh
+  git clone https://github.com/251167-boop/GEF_P34.git
+  cd GEF_P34
+  ```
 
-```sh
-python3 -m http.server 8000 --bind 127.0.0.1 --directory samples
-```
+### Load the extension into Chrome
 
-Then open `http://127.0.0.1:8000/site-warning.html` in Chrome and select a scenario. Reload a page after installing or reloading the extension. Only use the included fictional examples and synthetic values; never enter real passwords or personal information into demo forms.
+1. Open `chrome://extensions` in Chrome.
+2. Turn on **Developer mode** using the switch near the top-right corner.
+3. Select **Load unpacked**.
+4. Browse to the project folder and choose its `src/` directory (the folder containing `manifest.json`).
+5. Confirm that **AI WebShield — Local Demo** appears in the extensions list and is enabled.
+
+The extension is intentionally restricted to pages served from `localhost` or `127.0.0.1`. It will not run on ordinary websites or on pages opened directly as `file://` URLs.
+
+### Start the sample website
+
+1. Open Terminal (or another command prompt) in the project folder, the directory that contains `samples/`.
+2. Start the local web server:
+
+   ```sh
+   python3 -m http.server 8000 --bind 127.0.0.1 --directory samples
+   ```
+
+3. In Chrome, visit `http://127.0.0.1:8000/site-warning.html`.
+4. Open the other scenarios by replacing `site-warning.html` with `site-safe.html`, `site-caution.html`, `site-high-risk.html`, `site-lookalike.html`, or `privacy-check.html`.
+5. After changing or reloading the extension from `chrome://extensions`, reload the sample page so Chrome runs the updated content script.
+6. When finished, return to the Terminal window and press **Ctrl+C** to stop the server.
+
+Use only the included fictional examples and synthetic values. Do not enter real passwords or personal information into the demo forms.
+
+### Troubleshooting
+
+- **Chrome says the manifest is missing:** In **Load unpacked**, select the `src/` folder itself, not the repository root.
+- **The safety button does not appear:** Make sure the page address starts with `http://127.0.0.1:8000/` or `http://localhost:8000/`, then reload the page.
+- **A code change is not visible:** Open `chrome://extensions`, select the extension's reload icon, and reload the sample page.
+- **The sample page will not open:** Check that the Python server is still running in Terminal and that the command was started from the project folder.
 
 ## Privacy
 
