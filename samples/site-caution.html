@@ -3,20 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI WebShield — Caution Fixture</title>
-  <style>body{max-width:700px;margin:2rem auto;padding:0 1rem;font:16px/1.5 system-ui,sans-serif;color:#202124}.notice{padding:1rem;background:#fff2cc;border-left:4px solid #d6a100}label{display:block;margin:.8rem 0 .2rem;font-weight:600}input{box-sizing:border-box;width:100%;padding:.65rem}button{margin-top:1rem;padding:.65rem 1rem}</style>
+  <title>Northstar Learning Hub | Student sign in</title>
+  <style>
+    :root { color-scheme:light; --navy:#15273f; --blue:#234b75; --orange:#df713e; --cream:#f7f4ee; --muted:#727b86; --line:#e4e6e8; }
+    * { box-sizing:border-box; }
+    body { min-height:100vh; margin:0; background:var(--cream); color:var(--navy); font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    a { color:inherit; }
+    .utility { display:flex; justify-content:space-between; padding:9px max(24px,calc((100vw - 1120px)/2)); background:#102138; color:#d7dfeb; font-size:.78rem; letter-spacing:.03em; }
+    header { background:#fff; border-bottom:1px solid #e8e5df; }
+    .header-inner { display:flex; justify-content:space-between; align-items:center; max-width:1120px; margin:auto; padding:20px 24px; }
+    .brand { display:flex; align-items:center; gap:11px; text-decoration:none; }
+    .brand svg { width:43px; height:43px; }
+    .brand strong { display:block; font-size:1.02rem; letter-spacing:-.02em; }
+    .brand small { color:#7a818a; font-size:.66rem; font-weight:700; letter-spacing:.17em; text-transform:uppercase; }
+    nav { display:flex; gap:25px; color:#5f6d7d; font-size:.88rem; }
+    nav a { text-decoration:none; }
+    .crumbs { max-width:1120px; margin:0 auto; padding:20px 24px 0; color:#7f8790; font-size:.8rem; }
+    .crumbs a { text-decoration:none; }
+    .fixture-url { max-width:1120px; margin:8px auto 0; padding:0 24px; color:#8a8790; font-size:.74rem; }
+    main { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(340px,.75fr); gap:clamp(32px,8vw,100px); align-items:center; max-width:1050px; margin:25px auto 70px; padding:24px; }
+    .intro { padding:30px 0; }
+    .kicker { color:var(--orange); font-size:.75rem; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+    h1 { max-width:520px; margin:14px 0 17px; font:600 clamp(2.6rem,5.4vw,4.8rem)/.98 Georgia,"Times New Roman",serif; letter-spacing:-.045em; }
+    .intro>p { max-width:450px; color:#637080; font-size:1.05rem; }
+    .term-list { display:grid; gap:14px; margin:36px 0 0; padding:0; list-style:none; }
+    .term-list li { display:flex; align-items:center; gap:12px; color:#42556c; font-size:.92rem; }
+    .check { display:grid; place-items:center; width:27px; height:27px; flex:none; border-radius:50%; background:#e5ebf1; color:var(--blue); font-weight:800; }
+    .card { padding:clamp(26px,4vw,39px); border:1px solid #e6e4df; border-radius:16px; background:#fff; box-shadow:0 18px 48px #18294312; }
+    .card h2 { margin:0; font-size:1.45rem; letter-spacing:-.03em; }
+    .card .sub { margin:6px 0 24px; color:var(--muted); font-size:.9rem; }
+    label { display:block; margin:17px 0 7px; font-size:.84rem; font-weight:700; }
+    input { width:100%; min-height:47px; padding:11px 13px; border:1px solid #cdd3db; border-radius:7px; color:var(--navy); font:inherit; }
+    input:focus { border-color:#4778a8; outline:3px solid #4778a829; }
+    .help { display:block; margin-top:6px; color:#7c8793; font-size:.76rem; }
+    .submit { width:100%; margin-top:23px; padding:13px 16px; border:0; border-radius:7px; background:var(--blue); color:#fff; font:700 .95rem/1.2 system-ui,sans-serif; cursor:pointer; }
+    .submit:hover { background:#183c63; }
+    .forgot { display:block; margin-top:15px; color:var(--blue); text-align:center; text-decoration:none; font-size:.84rem; }
+    .notice { margin:19px 0 0; padding:11px 12px; border-radius:7px; background:#fff3e8; color:#805234; font-size:.78rem; }
+    #result { min-height:1.4em; margin:12px 0 0; color:#315a43; font-size:.82rem; }
+    footer { border-top:1px solid #e1ddd5; background:#f0ede6; }
+    .footer-inner { display:flex; justify-content:space-between; gap:20px; max-width:1120px; margin:auto; padding:22px 24px; color:#707a83; font-size:.78rem; }
+    .footer-links { display:flex; flex-wrap:wrap; gap:17px; }
+    .footer-links a { text-decoration:none; }
+    @media(max-width:760px) { nav { display:none; } main { grid-template-columns:1fr; gap:8px; margin-top:8px; } .intro { padding:15px 0; } .term-list { margin-top:24px; } .footer-inner { flex-direction:column; } }
+  </style>
 </head>
 <body data-webshield-demo-case="caution" data-webshield-demo-url="https://classroom-check.example.test/login">
-  <h1>Fictional school portal sign-in</h1>
-  <p class="notice"><strong>Caution fixture.</strong> This unfamiliar sample page requests login details. The request alone is not proof of phishing.</p>
-  <p>Sample URL label: <code>https://school-portal.example.test/login</code></p>
-  <form id="demo-form">
-    <label for="user">Synthetic username</label><input id="user" autocomplete="off" placeholder="student@example.invalid">
-    <label for="password">Synthetic password (must be ignored)</label><input id="password" type="password" autocomplete="new-password" placeholder="Never enter a real password">
-    <button type="submit">Test local form handling</button>
-  </form>
-  <p id="result" role="status" aria-live="polite"></p>
-  <p><a href="site-warning.html">Back to local test fixtures</a></p>
+  <div class="utility"><span>STUDENT SERVICES PORTAL</span><span>Support&nbsp; · &nbsp;Help centre</span></div>
+  <header><div class="header-inner">
+    <a class="brand" href="site-warning.html" aria-label="Northstar Learning Hub home and demo scenarios">
+      <svg viewBox="0 0 48 48" role="img" aria-label="Northstar Learning Hub logo"><rect x="2" y="2" width="44" height="44" rx="14" fill="#234b75"/><path d="m24 8 3.4 11.1L39 23l-11.6 3.9L24 39l-3.4-12.1L9 23l11.6-3.9L24 8Z" fill="#f2a06f"/><circle cx="24" cy="23" r="4" fill="#fff"/></svg>
+      <span><strong>Northstar</strong><small>Learning Hub</small></span>
+    </a>
+    <nav aria-label="Main navigation"><a href="#programs">Programs</a><a href="#support">Student support</a><a href="site-warning.html">Demo scenarios</a></nav>
+  </div></header>
+  <div class="crumbs"><a href="site-warning.html">Home</a> &nbsp;/&nbsp; Student portal &nbsp;/&nbsp; Sign in</div>
+  <div class="fixture-url">Address label in this test scenario: <code>classroom-check.example.test</code></div>
+  <main>
+    <section class="intro" id="programs"><div class="kicker">Your next step starts here</div><h1>Make room for what’s next.</h1><p>Sign in to the Northstar Learning Hub to view your student resources, course updates, and saved opportunities.</p>
+      <ul class="term-list"><li><span class="check" aria-hidden="true">✓</span>Keep learning resources in one place</li><li><span class="check" aria-hidden="true">✓</span>Pick up where you left off</li><li><span class="check" aria-hidden="true">✓</span>Get updates from your learning team</li></ul>
+    </section>
+    <section class="card" aria-labelledby="signin-title"><h2 id="signin-title">Welcome back</h2><p class="sub">Use your student account to continue.</p>
+      <form id="demo-form">
+        <label for="user">Student email or username</label><input id="user" name="user" type="text" autocomplete="off" placeholder="student@example.invalid">
+        <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="new-password" placeholder="Synthetic password only">
+        <span class="help">For this demo, use fictional values only. Password values are excluded from WebShield checks.</span>
+        <button class="submit" type="submit">Sign in to the demo</button>
+      </form>
+      <a class="forgot" href="#support">Forgot your password?</a>
+      <p class="notice"><strong>Unfamiliar page?</strong> Check that you expected to sign in before entering account details.</p>
+      <p id="result" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <footer id="support"><div class="footer-inner"><span>© 2026 Northstar Learning Hub · Fictional student portal demo</span><div class="footer-links"><a href="#support">Privacy</a><a href="#support">Help centre</a><a href="site-warning.html">Return to scenarios</a></div></div></footer>
   <script>document.getElementById('demo-form').addEventListener('submit',(event)=>{event.preventDefault();document.getElementById('result').textContent='Local demo only: form submission was stopped; no data was sent.';});</script>
 </body>
 </html>
