@@ -1,5 +1,7 @@
 # AI WebShield: Easy Browser Protection Powered by Local Edge AI
 
+> Historical report for the first-round submission build. It predates the on-demand scanning update documented in [`real-scanning-update.md`](real-scanning-update.md).
+
 ## Abstract (50 words)
 
 AI WebShield is a Chrome extension prototype helping secondary students notice privacy and website-safety risks. It checks non-password form text locally for email, eight-digit numbers, and a fake HKID pattern and evaluates localhost demo pages using explainable rules and a fictional blacklist. It demonstrates privacy-aware browsing without claiming universal protection.

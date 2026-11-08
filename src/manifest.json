@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "AI WebShield — Local Demo",
+  "name": "AI WebShield",
   "version": "0.1.0",
-  "description": "A localhost-only student safety prototype with local pattern checks.",
-  "permissions": ["storage"],
+  "description": "On-demand page checks with local rules and optional URL reputation lookup.",
+  "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "http://localhost/*",
     "http://127.0.0.1/*"
@@ -12,17 +12,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "AI WebShield — local demo only",
+    "default_title": "Scan this page with AI WebShield",
     "default_popup": "popup.html"
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "http://localhost/*",
-        "http://127.0.0.1/*"
-      ],
-      "js": ["demo-scam-database.js", "content.js"],
-      "run_at": "document_start"
-    }
-  ]
+  }
 }

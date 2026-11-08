@@ -12,10 +12,10 @@
   let explanationTimer = null;
   let explanationVisible = false;
   let pageRisk = {
-    level: 'neutral',
-    message: 'No demo warning signal was detected. This does not guarantee that a page is safe.',
-    demoHost: window.location.hostname.toLowerCase(),
-    isBlacklisted: false,
+    level: 'unknown',
+    message: 'Run a scan from the AI WebShield extension button to check this page.',
+    hostname: window.location.hostname.toLowerCase(),
+    signals: [],
   };
   let pageRiskReady = false;
 
@@ -27,9 +27,15 @@
     { category: 'fake HKID demo marker', token: '[REDACTED_TEST_ID]', source: '\\bFAKE-HKID-\\d{3}\\b', flags: 'gi' },
   ];
 
-  const trustedDemoHosts = [
-    'library.example.test',
-    'school-portal.example.test',
+  const knownBrandDomains = [
+    { name: 'Google', domains: ['google.com', 'gmail.com'], aliases: ['google', 'gmail'] },
+    { name: 'Microsoft', domains: ['microsoft.com', 'outlook.com', 'office.com', 'live.com'], aliases: ['microsoft', 'outlook', 'office', 'live'] },
+    { name: 'Apple', domains: ['apple.com', 'icloud.com'], aliases: ['apple', 'icloud'] },
+    { name: 'PayPal', domains: ['paypal.com'], aliases: ['paypal'] },
+    { name: 'Amazon', domains: ['amazon.com', 'amazon.co.uk', 'amazon.ca', 'amazon.co.jp'], aliases: ['amazon'] },
+    { name: 'Facebook', domains: ['facebook.com', 'instagram.com'], aliases: ['facebook', 'instagram'] },
+    { name: 'Netflix', domains: ['netflix.com'], aliases: ['netflix'] },
+    { name: 'GitHub', domains: ['github.com'], aliases: ['github'] },
   ];
 
   function getSupportedFields(form) {
@@ -90,140 +96,144 @@
     return findings;
   }
 
-  function getDomainParts(hostname) {
-    const host = hostname.toLowerCase().replace(/^www\./, '').replace(/\.$/, '');
-    const dot = host.indexOf('.');
-    if (dot < 1) return null;
-    return { label: host.slice(0, dot), suffix: host.slice(dot) };
+  function isIpv4Address(hostname) {
+    const parts = hostname.split('.');
+    return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255);
   }
 
-  function isOneCharacterEdit(first, second) {
-    if (first === second || Math.abs(first.length - second.length) > 1) return false;
-    let left = 0;
-    let right = 0;
-    let edits = 0;
-    while (left < first.length && right < second.length) {
-      if (first[left] === second[right]) {
-        left += 1;
-        right += 1;
-        continue;
-      }
-      edits += 1;
-      if (edits > 1) return false;
-      if (first.length > second.length) left += 1;
-      else if (second.length > first.length) right += 1;
-      else {
-        left += 1;
-        right += 1;
-      }
-    }
-    if (left < first.length || right < second.length) edits += 1;
-    return edits === 1;
+  function findBrandImitation(hostname) {
+    const labels = hostname.split('.');
+    return knownBrandDomains.find((brand) => {
+      const isOfficialDomain = brand.domains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+      const mentionsBrand = brand.aliases.some((alias) => labels.some((label) => label.includes(alias)));
+      return mentionsBrand && !isOfficialDomain;
+    }) || null;
   }
 
-  function findLookalike(hostname) {
-    const candidate = getDomainParts(hostname);
-    if (!candidate) return null;
-    for (const knownHost of trustedDemoHosts) {
-      const known = getDomainParts(knownHost);
-      if (!known || candidate.suffix !== known.suffix) continue;
-      if (isOneCharacterEdit(candidate.label, known.label)) return knownHost;
-    }
-    return null;
+  function isLoopbackHost(hostname) {
+    return hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '::1' || hostname === '[::1]' || hostname.startsWith('127.');
   }
 
-  function pageRequestsSensitiveInfo() {
-    for (const form of Array.from(document.forms)) {
-      for (const element of Array.from(form.elements)) {
-        if (element.tagName !== 'INPUT' && element.tagName !== 'TEXTAREA') continue;
-        const type = (element.type || '').toLowerCase();
-        const autocomplete = (element.getAttribute('autocomplete') || '').toLowerCase();
-        // Only inspect field metadata. Password field values are never read.
-        if (type === 'password' || type === 'email' || type === 'tel') return true;
-        if (/\b(username|current-password|new-password|email|tel|given-name|family-name)\b/.test(autocomplete)) return true;
-      }
-    }
-    return false;
-  }
-
-  function assessPageRisk() {
+  function inspectPageLocally() {
     const hostname = window.location.hostname.toLowerCase();
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-    let demoHost = hostname;
-    const demoUrlText = document.body && document.body.dataset.webshieldDemoUrl;
-    if (isLocalhost && demoUrlText) {
-      try {
-        demoHost = new URL(demoUrlText).hostname.toLowerCase();
-      } catch (_error) {
-        demoHost = hostname;
+    const isHttps = window.location.protocol === 'https:';
+    const passwordInputs = Array.from(document.querySelectorAll('input[type="password"]'));
+    const loginForms = Array.from(document.forms).filter((form) => form.querySelector('input[type="password"]'));
+    const signals = [];
+    const add = (signal, severity) => signals.push({ signal, severity });
+
+    if (passwordInputs.length && !isHttps && !isLoopbackHost(hostname)) add('A password field is present on an unencrypted HTTP page.', 'high');
+    if (passwordInputs.some((input) => input.form && input.form.method.toLowerCase() === 'get')) {
+      add('A sign-in form uses GET, which can place submitted fields in the page URL.', 'high');
+    }
+
+    const imitation = findBrandImitation(hostname);
+    if (loginForms.length && imitation) {
+      add(`The host contains the ${imitation.name} name but is outside its known domains.`, 'caution');
+    }
+
+    let sendsCredentialsOffSite = false;
+    let sendsCredentialsOverHttp = false;
+    let hasOffSiteForm = false;
+    let asksForSeveralPersonalFields = false;
+    for (const form of Array.from(document.forms)) {
+      const hasPassword = Boolean(form.querySelector('input[type="password"]'));
+      const action = form.getAttribute('action');
+      if (action) {
+        try {
+          const actionUrl = new URL(action, window.location.href);
+          if (actionUrl.origin !== window.location.origin) {
+            hasOffSiteForm = true;
+            if (hasPassword) sendsCredentialsOffSite = true;
+          }
+          if (hasPassword && actionUrl.protocol === 'http:' && !isLoopbackHost(actionUrl.hostname)) sendsCredentialsOverHttp = true;
+        } catch (_error) { /* Ignore malformed form actions and report other signals. */ }
+      }
+
+      if (hasPassword) {
+        const personalFieldCount = Array.from(form.querySelectorAll('input,textarea')).filter((field) => {
+          const metadata = `${field.name} ${field.id} ${field.autocomplete} ${field.type}`.toLowerCase();
+          return /email|tel|phone|mobile|hkid|passport|national.?id|address|birth|dob|ssn/.test(metadata);
+        }).length;
+        if (personalFieldCount >= 3) asksForSeveralPersonalFields = true;
       }
     }
-    if (!isLocalhost) {
-      return { level: 'neutral', message: 'This build only assesses localhost sample pages.', demoHost, isBlacklisted: false };
+
+    if (sendsCredentialsOverHttp) add('A sign-in form sends credentials over unencrypted HTTP.', 'high');
+    else if (sendsCredentialsOffSite && loginForms.length) add('A sign-in form sends credentials to a different site; this can be legitimate, so verify the destination.', 'caution');
+    else if (hasOffSiteForm) add('A form sends information to a different site.', 'caution');
+
+    const hasLogin = loginForms.length > 0;
+    if (hasLogin && hostname.split('.').some((label) => label.startsWith('xn--'))) {
+      add('The sign-in page uses a punycode hostname that may visually resemble another name.', 'caution');
+    }
+    if (hasLogin && isIpv4Address(hostname)) add('The sign-in page uses a raw IP address instead of a domain name.', 'caution');
+
+    if (hasLogin && asksForSeveralPersonalFields) {
+      add('The sign-in form requests several kinds of personal information.', 'caution');
     }
 
-    const bundledEntries = globalThis.AI_WEBSHIELD_DEMO_SCAM_LINKS || [];
-    const blacklistEntry = bundledEntries.find((entry) => {
-      try { return new URL(entry.url).hostname.toLowerCase() === demoHost; } catch (_error) { return false; }
-    });
-    if (blacklistEntry) {
-      return { level: 'high', message: `Blacklisted demo site: ${blacklistEntry.reason}`, demoHost, isBlacklisted: true };
-    }
+    const visibleText = (document.body && document.body.innerText || '').slice(0, 12000);
+    const urgencyLanguage = /\b(urgent|immediately|within\s+\d+\s+hours?|today|suspend(?:ed|sion)?|locked|expire(?:s|d)?|verify now|action required|unusual activity)\b/i.test(visibleText);
+    if (hasLogin && urgencyLanguage) add('Urgent account language appears alongside a sign-in form.', 'caution');
 
-    const demoCase = document.body && document.body.dataset.webshieldDemoCase;
-    if (demoCase === 'seeded-high-risk' && document.body.dataset.webshieldTestThreat === 'seeded-phishing-fixture') {
-      return { level: 'high', message: 'High risk: this is the explicitly seeded high-risk demo fixture. Leave this sample page.', demoHost, isBlacklisted: false };
-    }
-
-    const requestsSensitiveInfo = pageRequestsSensitiveInfo();
-    const similarHost = findLookalike(demoHost);
-    if (requestsSensitiveInfo && similarHost) {
-      return {
-        level: 'high',
-        message: `High risk: this sample address is one character different from ${similarHost} and asks for sign-in or contact details. Check the address and leave if you did not expect this page.`,
-        demoHost,
-        isBlacklisted: false,
-      };
-    }
-
-    if (requestsSensitiveInfo && !trustedDemoHosts.includes(demoHost)) {
-      return {
-        level: 'caution',
-        message: 'Caution: this unfamiliar sample page asks for sign-in or contact details. Check the address; this alone does not prove it is a scam.',
-        demoHost,
-        isBlacklisted: false,
-      };
-    }
-
-    return {
-      level: 'neutral',
-      message: 'No demo warning signal was detected. This is not a guarantee that a page is safe.',
-      demoHost,
-      isBlacklisted: false,
-    };
+    const highestSeverity = signals.some((item) => item.severity === 'high') ? 'high' : signals.length ? 'caution' : 'neutral';
+    return { hostname, level: highestSeverity, signals: signals.map((item) => item.signal) };
   }
 
-  function publishPageRisk() {
-    const assessed = assessPageRisk();
-    const storage = chrome.storage && chrome.storage.local;
-    const finish = (reportedHosts = []) => {
-      pageRisk = assessed;
-      if (reportedHosts.includes(assessed.demoHost)) {
-        pageRisk = { ...assessed, level: 'high', isBlacklisted: true, message: `This site was reported as a demo scam link and is on your local block list: ${assessed.demoHost}.` };
-      }
-      pageRiskReady = true;
-      renderSafetySignal(true);
-      showPageRiskWarning();
+  function sendRuntimeMessage(message) {
+    return new Promise((resolve) => {
       try {
-        chrome.runtime.sendMessage({ type: 'WEB_SHIELD_PAGE_RISK', level: pageRisk.level }, () => { void chrome.runtime.lastError; });
-      } catch (_error) { /* The page remains usable if the extension reloads. */ }
-    };
-    if (storage) {
-      storage.get({ reportedScamHosts: [] }, (result) => {
+        chrome.runtime.sendMessage(message, (response) => {
+          const failed = Boolean(chrome.runtime.lastError);
+          resolve(failed ? null : response || null);
+        });
+      } catch (_error) { resolve(null); }
+    });
+  }
+
+  function getReportedHosts() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get({ reportedScamHosts: [] }, (result) => {
         void chrome.runtime.lastError;
-        finish(Array.isArray(result && result.reportedScamHosts) ? result.reportedScamHosts : []);
+        resolve(Array.isArray(result && result.reportedScamHosts) ? result.reportedScamHosts : []);
       });
-    } else finish();
+    });
+  }
+
+  async function runPageScan() {
+    const local = inspectPageLocally();
+    const reputation = await sendRuntimeMessage({ type: 'WEB_SHIELD_LOOKUP_URL' }) || { status: 'unavailable' };
+    const reportedHosts = await getReportedHosts();
+    let level = local.level;
+    let message = '';
+
+    if (reportedHosts.includes(local.hostname)) {
+      level = 'high';
+      message = `You reported ${local.hostname} in this browser. Treat it as high risk.`;
+    } else if (reputation.status === 'match') {
+      level = 'high';
+      const threats = Array.isArray(reputation.threatTypes) ? reputation.threatTypes.join(', ') : 'known threat';
+      message = `Google Safe Browsing found a match (${threats}). Do not enter information unless you expected this site.`;
+    } else if (local.level === 'high') {
+      message = `High-risk page signals: ${local.signals.join(' ')}`;
+    } else if (local.level === 'caution') {
+      const apiNote = reputation.status === 'not_listed' ? ' No Safe Browsing list match was found.' : ' URL reputation could not be confirmed.';
+      message = `Review this page: ${local.signals.join(' ')}${apiNote}`;
+    } else if (reputation.status === 'not_listed') {
+      level = 'neutral';
+      message = 'No Safe Browsing match or strong local warning pattern was found. This does not guarantee that the site is safe.';
+    } else {
+      level = 'unknown';
+      message = `${reputation.message || 'URL reputation is unavailable.'} No strong local warning pattern was found, so this page is unverified.`;
+    }
+
+    pageRisk = { level, message, hostname: local.hostname, signals: local.signals, reputationStatus: reputation.status || 'unavailable' };
+    pageRiskReady = true;
+    renderSafetySignal(true);
+    if (pageRisk.level === 'high') showPageRiskWarning();
+    sendRuntimeMessage({ type: 'WEB_SHIELD_PAGE_RISK', level: pageRisk.level });
+    return { active: true, level: pageRisk.level, message: pageRisk.message, reputationStatus: pageRisk.reputationStatus };
   }
 
   function ensureSafetySignal() {
@@ -240,7 +250,7 @@
         .bubble.visible { display: block; }
         .signal { display: grid; place-items: center; width: 58px; height: 58px; border: 2px solid rgba(255,255,255,.95); border-radius: 50%; color: #fff; box-shadow: 0 3px 14px rgba(0,0,0,.28); cursor: pointer; font: 700 24px/1 system-ui,sans-serif; }
         .signal:focus-visible { outline: 3px solid #1a73e8; outline-offset: 3px; }
-        .green { background: #188038; } .yellow { background: #f9ab00; color: #202124; } .red { background: #d93025; }
+        .green { background: #188038; } .yellow { background: #f9ab00; color: #202124; } .red { background: #d93025; } .unknown { background: #5f6368; }
       </style>
       <div class="wrap"><div class="bubble" id="ws-signal-message" role="status"></div><button type="button" class="signal" id="ws-signal-button" aria-label="Website safety signal" aria-expanded="false"></button></div>`;
     safetyRoot.getElementById('ws-signal-button').addEventListener('click', () => {
@@ -266,9 +276,9 @@
     ensureSafetySignal();
     const button = safetyRoot.getElementById('ws-signal-button');
     const bubble = safetyRoot.getElementById('ws-signal-message');
-    const status = pageRisk.level === 'high' ? 'red' : pageRisk.level === 'caution' ? 'yellow' : 'green';
+    const status = pageRisk.level === 'high' ? 'red' : pageRisk.level === 'caution' ? 'yellow' : pageRisk.level === 'neutral' ? 'green' : 'unknown';
     button.className = `signal ${status}`;
-    button.textContent = status === 'green' ? '✓' : '!';
+    button.textContent = status === 'green' ? '✓' : status === 'unknown' ? '?' : '!';
     button.setAttribute('aria-label', `${status} safety signal. Click for explanation.`);
     bubble.textContent = pageRisk.message;
     if (showBriefly && status !== 'red') setExplanationVisible(true, true);
@@ -277,15 +287,15 @@
 
   function saveReportedHost(callback) {
     const storage = chrome.storage && chrome.storage.local;
-    if (!storage || !pageRisk.demoHost) { callback(false); return; }
+    if (!storage || !pageRisk.hostname) { callback(false); return; }
     storage.get({ reportedScamHosts: [] }, (result) => {
       void chrome.runtime.lastError;
       const hosts = Array.isArray(result && result.reportedScamHosts) ? result.reportedScamHosts : [];
-      if (!hosts.includes(pageRisk.demoHost)) hosts.push(pageRisk.demoHost);
+      if (!hosts.includes(pageRisk.hostname)) hosts.push(pageRisk.hostname);
       storage.set({ reportedScamHosts: hosts }, () => {
         const failed = Boolean(chrome.runtime.lastError);
         if (!failed) {
-          pageRisk = { ...pageRisk, level: 'high', isBlacklisted: true, message: `This site is now on your local block list: ${pageRisk.demoHost}.` };
+          pageRisk = { ...pageRisk, level: 'high', message: `This site is now on your local block list: ${pageRisk.hostname}.` };
           renderSafetySignal(false);
         }
         callback(!failed);
@@ -297,13 +307,13 @@
     if (pageRisk.level !== 'high') return;
     const feedback = document.createElement('p');
     feedback.className = 'privacy';
-    feedback.textContent = 'Reported hostnames are saved only in this browser. No page contents or form values are sent.';
+    feedback.textContent = 'Reported hostnames are saved only in this browser. Page text and form values are not sent.';
     const detail = document.createElement('p');
     detail.textContent = pageRisk.message;
     const report = makeButton('Report this site', () => {
       report.disabled = true;
       saveReportedHost((saved) => {
-        feedback.textContent = saved ? `Reported. ${pageRisk.demoHost} is saved in this browser’s local block list.` : 'Could not save the report in this browser.';
+        feedback.textContent = saved ? `Reported. ${pageRisk.hostname} is saved in this browser’s local block list.` : 'Could not save the report in this browser.';
         report.disabled = false;
       });
     });
@@ -313,7 +323,7 @@
       [
         makeButton('Go back', () => {
           if (window.history.length > 1) window.history.back();
-          else window.location.assign('site-warning.html');
+          else closePanel();
         }, 'cancel'),
         report,
         makeButton('Stay on page', closePanel, 'primary'),
@@ -517,21 +527,21 @@
 
   document.addEventListener('submit', handleSubmit, true);
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', publishPageRisk, { once: true });
-  } else {
-    publishPageRisk();
-  }
-
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message && message.type === 'WEB_SHIELD_STATUS') {
-      if (!pageRiskReady && document.body) publishPageRisk();
-      sendResponse({
-        active: true,
-        scope: 'localhost sample pages only',
-        level: pageRiskReady ? pageRisk.level : 'checking',
-        message: pageRiskReady ? pageRisk.message : 'Page signal is still loading.',
+    if (message && message.type === 'WEB_SHIELD_SCAN_NOW') {
+      runPageScan().then(sendResponse).catch(() => {
+        sendResponse({ active: false, level: 'unknown', message: 'The page scan could not be completed.' });
       });
+      return true;
     }
+    if (message && message.type === 'WEB_SHIELD_STATUS') {
+      sendResponse({
+        active: pageRiskReady,
+        level: pageRisk.level,
+        message: pageRisk.message,
+      });
+      return false;
+    }
+    return false;
   });
 })();

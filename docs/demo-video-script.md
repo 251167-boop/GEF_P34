@@ -1,5 +1,7 @@
 # AI WebShield — 3–5 Minute Demo Video Script
 
+> This script describes the first-round seeded-demo build. The current scanner uses a user-triggered URL reputation check and local heuristics; update the spoken claims before recording. See [`real-scanning-update.md`](real-scanning-update.md).
+
 **Target runtime:** about 4 minutes at a steady speaking pace.  
 **Recording:** use Chrome with the unpacked extension loaded and the local sample pages served from `127.0.0.1`. Only use the fictional sample pages and synthetic values below.
 

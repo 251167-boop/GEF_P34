@@ -1,5 +1,7 @@
 # Day 4 integration and QA log
 
+> Historical QA record for the first-round localhost build. The current on-demand scanner is described in [`real-scanning-update.md`](real-scanning-update.md) and still needs interactive Chrome QA.
+
 ## What was inspected
 
 - Opened the local fixture index and each of the safe, caution, lookalike, seeded high-risk, and privacy sample pages in the in-app browser.

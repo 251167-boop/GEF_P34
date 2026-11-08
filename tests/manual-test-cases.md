@@ -1,23 +1,21 @@
-# Manual test cases — synthetic data only
+# Manual review cases — use synthetic data only
 
-Use the local pages in `samples/`. All inputs below are fictional test strings. Never substitute a student's real details, real account credentials, or a real HKID.
+Start `python3 server.py` from the repository root. Load `src/` as an unpacked extension. For page-risk cases, scan the page from the extension popup first. Do not substitute a real student’s personal details or account credentials.
 
 | ID | Area | Setup / input | Expected result | Privacy / safety check |
 |---|---|---|---|---|
-| P-01 | Safe baseline | On `privacy-check.html`, submit ordinary text: `Please help me plan a study schedule.` | No sensitive-data prompt; local demo confirms submission was intercepted locally. | No network request is made by the sample page. |
-| P-02 | Email-like pattern | Enter `student@example.invalid` in the message field. | A pre-submit prompt identifies an email-like value and offers a visible proposed mask. | Text is not silently changed; student can undo or cancel. |
-| P-03 | Phone-like pattern | Enter the synthetic fixture `00000000` in the message field. | A pre-submit prompt identifies a phone-like pattern, with a note that pattern detection can be wrong. | Do not persist the input in logs. |
-| P-04 | HKID-like fixture | Enter `FAKE-HKID-001` in the dedicated demo field. | The demo-specific fake-ID marker triggers a prompt; it is clearly labeled as a test fixture. | Do not present the fixture as a valid or real identifier. |
-| P-05 | Password exclusion | Enter `example-only-passphrase` in the password field. | The password field is ignored; no password-value warning or masking occurs. | Confirm the checker never reads, transmits, or logs the password value. |
-| P-06 | Reversible mask | Use P-02, choose mask, then undo before confirming. | Original text is restored; no hidden submission occurs. | The user remains in control of the final text. |
-| W-01 | Safe page | Open `site-safe.html`. | Green button appears bottom-right. Explanation hides after three seconds and returns when the button is clicked. | Do not call green a guarantee of safety. |
-| W-02 | Caution | Open `site-caution.html`. | Yellow button appears bottom-right. Explanation hides after three seconds and returns when clicked. | An unfamiliar form alone must not receive red; do not enter real details. |
-| W-03 | Lookalike fixture | Open `site-lookalike.html` from the local server. Do not enter real details. | Red signal and warning appear with Go back and Report this site options. | The displayed `.test` URL is fictional; the extension only evaluates the fixture while the actual page is on localhost. |
-| W-04 | Blacklist fixture | Open `site-high-risk.html` on localhost in the demo build. | The bundled blacklist match shows red and opens a warning with Go back and Report this site. | Entries are fictional; reported hostnames stay in this browser's local extension storage. |
-| W-05 | False-positive check | Open the safe mode while the page contains an ordinary contact form. | Do not show red. Record any yellow prompt as a possible false positive for review. | Warning severity stays proportional to evidence. |
-| N-01 | Offline/privacy check | Disconnect network if practical, then use both sample pages. | Local checks still run for the supported fixtures. | Browser network panel should show no field-content transmission. |
-| N-02 | Form submission | Submit each sample form. | The page displays its local demo response and remains on the local page. | Form handler prevents network submission. |
+| P-01 | Safe baseline | Scan `privacy-check.html`; submit ordinary text: `Please help me plan a study schedule.` | No sensitive-data prompt; sample form confirms its local submit handler ran. | No form value is sent to the reputation service. |
+| P-02 | Email-like pattern | Enter `student@example.invalid` in the message field. | Pre-submit review identifies email-like text and offers a visible mask. | Text is not silently changed; user can undo or cancel. |
+| P-03 | Number-like pattern | Enter the synthetic fixture `00000000`. | Pre-submit review flags the eight-digit pattern, which may be a false positive. | Do not persist or log the entered value. |
+| P-04 | HKID demo marker | Enter `FAKE-HKID-001` in the dedicated sample field. | The synthetic marker triggers the pre-submit review. | Do not present the fixture as a valid or real HKID. |
+| P-05 | Password exclusion | Enter a synthetic password in the sample password field. | Password value is excluded from the form-pattern review. | Confirm the checker never reads, sends, or logs the password value. |
+| P-06 | Reversible mask | Use P-02, choose mask, then undo before confirming. | Original text is restored; no hidden submission occurs. | User remains in control of the final value. |
+| W-01 | Local sample page | Scan `site-safe.html`. | Page checks run. With the API configured, a no-match plus no local signals is green; without the API, the result is unknown. | The scan checks the actual `127.0.0.1` page URL, not the fictional address printed in the page. |
+| W-02 | Urgent sign-in heuristics | Scan `site-high-risk.html` from the local server. | The page’s urgent account language alongside a password form should produce caution. It must not be treated as a real threat-list match. | The sample is HTTP loopback; the rule intentionally ignores that local transport for credential-risk scoring. |
+| W-03 | Confirmed threat match | With a valid API key, scan Google’s documented Safe Browsing test URL, `http://testsafebrowsing.appspot.com/s/malware.html`. | API response should return a threat match and WebShield should show red. | This is a designated test URL; never use a real suspected malware page for a manual demonstration. |
+| W-04 | API unavailable | Stop the local server or start it without `GOOGLE_SAFE_BROWSING_API_KEY`, then scan a page with no local risk signals. | Result is gray/unknown, not green or “safe.” Local page heuristics still run. | Do not turn a failed lookup into a safe result. |
+| W-05 | Local report | On a red result, select **Report this site**. | Hostname is added to this browser’s local list and will be red on a later scan. | Reports are not uploaded or shared. |
+| W-06 | Heuristic severity | Use a synthetic test page with a password form submitting over HTTP, or a GET password form. | Local rules show high risk and explain the signal. | Do not enter any real account data. |
+| N-01 | URL privacy | Scan a page whose URL has a harmless query, fragment, and a long token-like path segment. | Lookup request omits query and fragment and redacts long token-like path segments. | Verify no form values or page text are sent to the API. |
 
-## Result log template
-
-For each run, record the case ID, pass/fail, what appeared, false alarm or miss, and a brief fix note. Do not include the entered sample text in the log.
+Record pass/fail, visible result, and any false alarm or miss. Do not write entered sample values into the result log.

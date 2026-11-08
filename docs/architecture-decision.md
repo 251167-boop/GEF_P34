@@ -1,5 +1,7 @@
 # Architecture decision — first-round prototype
 
+> This records the original local-only decision. The current on-demand scanning design supersedes it; see [`real-scanning-update.md`](real-scanning-update.md).
+
 **Status:** chosen for the first demo; revisit after the submission.
 
 ## Decision

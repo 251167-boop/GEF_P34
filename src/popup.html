@@ -12,19 +12,20 @@
       <span class="status-dot" aria-hidden="true"></span>
       <div>
         <h1>AI WebShield</h1>
-        <p class="subtitle">Local demo</p>
+        <p class="subtitle">On-demand page scan</p>
       </div>
     </div>
-    <p id="status" role="status" aria-live="polite">Checking this tab…</p>
+    <p id="status" role="status" aria-live="polite">Choose Scan this page to check the active tab.</p>
+    <button id="scan-page" type="button">Scan this page</button>
     <section class="privacy">
-      <h2>Privacy in this prototype</h2>
+      <h2>What the scan checks</h2>
       <ul>
-        <li>Checks run in this browser tab.</li>
-        <li>Password fields are skipped.</li>
-        <li>Text is not sent or persistently stored; originals stay in memory while you review.</li>
+        <li>Page and form signals are analyzed locally. Form values and passwords are never read by the site-risk scan.</li>
+        <li>The reputation check sends a sanitized URL to the local scanner, which forwards it to Google Safe Browsing when configured.</li>
+        <li>Query strings, fragments, and long token-like path segments are removed before lookup.</li>
       </ul>
     </section>
-    <p class="limit">This demo only runs on localhost sample pages. No warning is a guarantee that a site is safe.</p>
+    <p class="limit">No match does not prove a site is safe. The scan is on demand and does not block navigation.</p>
   </main>
   <script src="popup.js"></script>
 </body>

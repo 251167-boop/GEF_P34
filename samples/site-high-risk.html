@@ -53,7 +53,7 @@
     @media(max-width:780px) { nav a:not(.nav-signin) { display:none; } .layout { grid-template-columns:1fr; gap:12px; margin-top:8px; } .message { padding:8px 0; } .footer-inner { flex-direction:column; } }
   </style>
 </head>
-<body data-webshield-demo-case="seeded-high-risk" data-webshield-test-threat="seeded-phishing-fixture" data-webshield-demo-url="https://school-portaI.example.test/login">
+<body>
   <div class="alert-bar"><span class="alert-icon" aria-hidden="true">!</span> ACTION REQUIRED &nbsp;·&nbsp; Review your student account today</div>
   <header><div class="header-inner">
     <a class="brand" href="site-warning.html" aria-label="Meridian Student Access home and demo scenarios">
@@ -80,7 +80,7 @@
       <div class="trust-row"><span>◈ Account services</span><span>•</span><span>Student portal</span></div>
     </section>
   </main>
-  <footer id="help"><div class="footer-inner"><div><strong>Meridian Student Access</strong><br><small>Student services portal · Fictional training demo</small></div><div class="footer-links"><a href="#help">Privacy</a><a href="#help">Support</a><a href="site-warning.html">Return to test scenarios</a></div></div><div class="demo-disclaimer">This simulated page uses a reserved example domain and an explicit high-risk marker for local WebShield testing. It is not a real institution or login service.</div></footer>
+  <footer id="help"><div class="footer-inner"><div><strong>Meridian Student Access</strong><br><small>Student services portal · Fictional training demo</small></div><div class="footer-links"><a href="#help">Privacy</a><a href="#help">Support</a><a href="site-warning.html">Return to test scenarios</a></div></div><div class="demo-disclaimer">This simulated layout uses a reserved example address as a teaching prop. WebShield checks the actual page address, not this displayed label. It is not a real institution or login service.</div></footer>
   <script>document.getElementById('demo-form').addEventListener('submit',(event)=>{event.preventDefault();document.getElementById('result').textContent='Local demo only: form submission was stopped; no data was sent.';});</script>
 </body>
 </html>

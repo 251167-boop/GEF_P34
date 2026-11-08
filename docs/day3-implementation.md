@@ -1,5 +1,7 @@
 # Day 3 — Local page-risk signals
 
+> Historical implementation note: the localhost-only classifier, seeded warning, and bundled blacklist described here have been replaced. See [`real-scanning-update.md`](real-scanning-update.md) for current scan behavior.
+
 ## What was added
 
 - The popup and toolbar badge report a page signal: neutral, caution, or high risk.
