@@ -41,7 +41,7 @@
     input:focus { border-color:var(--violet); outline:3px solid #6e43a526; }
     .submit { width:100%; margin-top:21px; padding:13px 16px; border:0; border-radius:5px; background:var(--purple); color:#fff; font:700 .92rem/1.2 system-ui,sans-serif; cursor:pointer; }
     .submit:hover { background:#49346b; }
-    .synthetic-note { margin:12px 0 0; color:#747889; font-size:.75rem; }
+    .synthetic-note { display:block; margin:12px 0 0; color:#747889; font-size:.75rem; }
     #result { min-height:1.3em; margin:10px 0 0; color:#315a43; font-size:.8rem; }
     .trust-row { display:flex; justify-content:center; gap:18px; margin-top:21px; color:#828392; font-size:.72rem; }
     footer { background:#211a30; color:#d8d2e2; }
@@ -71,10 +71,12 @@
     <section class="signin-card" id="account" aria-labelledby="signin-title"><div class="card-brand">Meridian secure access</div><h2 id="signin-title">Verify your account</h2><p class="sub">Sign in to confirm your student profile.</p>
       <form id="demo-form">
         <label for="user">Student email</label><input id="user" name="user" type="text" autocomplete="off" placeholder="student@example.invalid">
+        <label for="hkid">HKID</label><input id="hkid" name="hkid" type="text" autocomplete="off" placeholder="FAKE-HKID-001 (test value only)">
+        <span class="synthetic-note">Use the fictional marker only. WebShield should offer to mask it in this local test.</span>
         <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="new-password" placeholder="Synthetic password only">
         <button class="submit" type="submit">Continue to verification</button>
       </form>
-      <p class="synthetic-note">Test fixture only. Use fictional values; never enter a real password.</p><p id="result" role="status" aria-live="polite"></p>
+      <p class="synthetic-note">Test fixture only. Use fictional values; never enter a real HKID or password.</p><p id="result" role="status" aria-live="polite"></p>
       <div class="trust-row"><span>◈ Account services</span><span>•</span><span>Student portal</span></div>
     </section>
   </main>
