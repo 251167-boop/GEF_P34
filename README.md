@@ -81,6 +81,7 @@ The sample pages contain fictional example addresses for teaching. The scanner c
 
 - **Why is the reputation result unknown?** Check that `server.py` is running and that `GOOGLE_SAFE_BROWSING_API_KEY` is set in the same Terminal session. Local page rules still work when reputation lookup is unavailable.
 - **Why can’t Chrome scan this page?** Chrome restricts extension access to internal browser pages and some protected pages. Try a regular `http://` or `https://` tab, click the extension, and start the scan there.
+- **Why does the circle appear only after I click the extension?** Open `chrome://extensions`, select **Details** for AI WebShield, and set **Site access** to **On all sites**. “On click” only lets the manual rescan access the page. Then reload the extension and refresh the webpage. Confirm that **Load unpacked** points to this repository’s `src/` folder.
 - **Why do I get a 404 for a sample page?** Start `python3 server.py` from the repository root. It serves the `samples/` folder automatically. If port 8000 is already in use, stop the other server with **Ctrl+C** first.
 - **Why doesn’t the privacy prompt appear?** The privacy prompt is separate from automatic site-risk scanning. Submit a form with synthetic test values that match one of the privacy rules to see it.
 - **How do I apply an extension code change?** Open `chrome://extensions`, click the extension’s reload icon, and reload the webpage.
