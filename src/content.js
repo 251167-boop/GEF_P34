@@ -18,6 +18,7 @@
     signals: [],
   };
   let pageRiskReady = false;
+  let currentScanPromise = null;
 
   // Rules are intentionally small and explainable for the first prototype.
   // The eight-digit rule is broad by design and may produce false positives.
@@ -201,7 +202,14 @@
     });
   }
 
-  async function runPageScan() {
+  function runPageScan() {
+    if (currentScanPromise) return currentScanPromise;
+    renderScanLoading();
+    currentScanPromise = performPageScan();
+    return currentScanPromise.finally(() => { currentScanPromise = null; });
+  }
+
+  async function performPageScan() {
     const local = inspectPageLocally();
     const reputation = await sendRuntimeMessage({ type: 'WEB_SHIELD_LOOKUP_URL' }) || { status: 'unavailable' };
     const reportedHosts = await getReportedHosts();
@@ -224,8 +232,8 @@
       level = 'neutral';
       message = 'No Safe Browsing match or strong local warning pattern was found. This does not guarantee that the site is safe.';
     } else {
-      level = 'unknown';
-      message = `${reputation.message || 'URL reputation is unavailable.'} No strong local warning pattern was found, so this page is unverified.`;
+      level = 'neutral';
+      message = `No strong local warning pattern was found. ${reputation.message || 'URL reputation could not be confirmed.'} A green signal is not a safety guarantee.`;
     }
 
     pageRisk = { level, message, hostname: local.hostname, signals: local.signals, reputationStatus: reputation.status || 'unavailable' };
@@ -249,10 +257,14 @@
         .bubble { display: none; box-sizing: border-box; width: max-content; max-width: min(320px, calc(100vw - 32px)); padding: 12px 14px; border: 1px solid #dadce0; border-radius: 12px; background: #fff; color: #202124; box-shadow: 0 4px 16px rgba(60,64,67,.22); overflow-wrap: anywhere; word-break: break-word; }
         .bubble.visible { display: block; }
         .signal { display: grid; place-items: center; width: 58px; height: 58px; border: 2px solid rgba(255,255,255,.95); border-radius: 50%; color: #fff; box-shadow: 0 3px 14px rgba(0,0,0,.28); cursor: pointer; font: 700 24px/1 system-ui,sans-serif; }
+        .signal.loading { background: #5f6368; cursor: wait; }
+        .spinner { display: none; width: 23px; height: 23px; border: 3px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: ws-spin .75s linear infinite; }
+        .signal.loading .spinner { display: block; }
+        @keyframes ws-spin { to { transform: rotate(360deg); } }
         .signal:focus-visible { outline: 3px solid #1a73e8; outline-offset: 3px; }
         .green { background: #188038; } .yellow { background: #f9ab00; color: #202124; } .red { background: #d93025; } .unknown { background: #5f6368; }
       </style>
-      <div class="wrap"><div class="bubble" id="ws-signal-message" role="status"></div><button type="button" class="signal" id="ws-signal-button" aria-label="Website safety signal" aria-expanded="false"></button></div>`;
+      <div class="wrap"><div class="bubble" id="ws-signal-message" role="status"></div><button type="button" class="signal" id="ws-signal-button" aria-label="Website safety signal" aria-expanded="false"><span class="spinner" aria-hidden="true"></span></button></div>`;
     safetyRoot.getElementById('ws-signal-button').addEventListener('click', () => {
       if (pageRisk.level === 'high') { showPageRiskWarning(); return; }
       setExplanationVisible(!explanationVisible, true);
@@ -278,11 +290,35 @@
     const bubble = safetyRoot.getElementById('ws-signal-message');
     const status = pageRisk.level === 'high' ? 'red' : pageRisk.level === 'caution' ? 'yellow' : pageRisk.level === 'neutral' ? 'green' : 'unknown';
     button.className = `signal ${status}`;
-    button.textContent = status === 'green' ? '✓' : status === 'unknown' ? '?' : '!';
+    button.removeAttribute('aria-busy');
+    button.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+    button.append(document.createTextNode(status === 'green' ? '✓' : status === 'unknown' ? '?' : '!'));
     button.setAttribute('aria-label', `${status} safety signal. Click for explanation.`);
     bubble.textContent = pageRisk.message;
     if (showBriefly && status !== 'red') setExplanationVisible(true, true);
     else setExplanationVisible(false, false);
+  }
+
+  function renderScanLoading() {
+    ensureSafetySignal();
+    const button = safetyRoot.getElementById('ws-signal-button');
+    const bubble = safetyRoot.getElementById('ws-signal-message');
+    button.className = 'signal loading';
+    button.setAttribute('aria-label', 'Scanning this page');
+    button.setAttribute('aria-busy', 'true');
+    bubble.textContent = 'Checking local page signals and URL reputation…';
+    setExplanationVisible(true, false);
+  }
+
+  function showScanFailure() {
+    pageRisk = {
+      ...pageRisk,
+      level: 'neutral',
+      message: 'No strong warning pattern was found, but the scan could not fully complete. This is not a safety guarantee.',
+    };
+    pageRiskReady = true;
+    renderSafetySignal(true);
+    sendRuntimeMessage({ type: 'WEB_SHIELD_PAGE_RISK', level: pageRisk.level });
   }
 
   function saveReportedHost(callback) {
@@ -530,7 +566,8 @@
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message && message.type === 'WEB_SHIELD_SCAN_NOW') {
       runPageScan().then(sendResponse).catch(() => {
-        sendResponse({ active: false, level: 'unknown', message: 'The page scan could not be completed.' });
+        showScanFailure();
+        sendResponse({ active: true, level: 'neutral', message: pageRisk.message });
       });
       return true;
     }
@@ -544,4 +581,7 @@
     }
     return false;
   });
+
+  ensureSafetySignal();
+  runPageScan().catch(showScanFailure);
 })();

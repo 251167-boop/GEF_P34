@@ -1,6 +1,6 @@
 # AI WebShield — Junior Secondary Edition
 
-AI WebShield is a student-built Chrome extension prototype for on-demand page checks. It combines local, explainable page signals with an optional Google Safe Browsing URL reputation lookup. It is an educational prototype, not a guarantee of protection.
+AI WebShield is a student-built Chrome extension prototype that automatically checks ordinary HTTP and HTTPS pages as they load. It combines local, explainable page signals with an optional Google Safe Browsing URL reputation lookup. It is an educational prototype, not a guarantee of protection.
 
 ## What it checks
 
@@ -9,13 +9,13 @@ AI WebShield is a student-built Chrome extension prototype for on-demand page ch
 - **Privacy review:** After scanning a page, the extension can review supported non-password text fields when a form is submitted. It suggests masks for email-like text, eight-digit numbers, and the synthetic `FAKE-HKID-001` test marker. Password values are skipped, and the user chooses whether to mask, undo, continue, or cancel.
 - **Local reports:** “Report this site” stores the hostname in this browser’s extension storage. Reports are not shared.
 
-The scan is started by clicking the extension and choosing **Scan this page**. It checks only the active HTTP or HTTPS tab after that action; it does not monitor every tab or block navigation. The extension uses Chrome’s temporary `activeTab` permission rather than requesting access to every website at install time.
+The scan starts automatically when an ordinary HTTP or HTTPS page loads. A round indicator appears at the bottom right and shows a spinner during scanning. You can also rescan from the extension popup. Chrome will request permission to read and check websites you visit; browser-internal pages and some protected pages cannot be scanned. Red signals indicate a confirmed threat match, a strong local warning, or a hostname you previously reported; yellow signals indicate medium caution patterns; green means no strong warning was found, not that safety is guaranteed. The extension does not block navigation.
 
 ## How reputation lookup works
 
 The extension sends a sanitized page URL to the local `server.py` process. The local service uses the API key from `GOOGLE_SAFE_BROWSING_API_KEY` to call Google Safe Browsing v5. Query strings, fragments, credentials, and long token-like path segments are removed before lookup. The remaining URL path and hostname are still shared with Google for the reputation check. Page text and form contents are not sent.
 
-If the API key is missing or the service is unreachable, local rules still run, but the result is shown as **unknown** when they find no warning signals. “No match” means only that no Safe Browsing match was returned; it does not prove the site is safe. Google documents Safe Browsing for non-commercial use; use Web Risk for commercial products. See the [Safe Browsing v5 API](https://developers.google.com/safe-browsing/reference/rest/v5/urls/search) and its [usage overview](https://developers.google.com/safe-browsing/reference).
+If the API key is missing or the service is unreachable, local rules still run. With no local warning signal, the indicator is green and its message says that reputation could not be confirmed. Green means no strong warning was found; it does not prove the site is safe. Google documents Safe Browsing for non-commercial use; use Web Risk for commercial products. See the [Safe Browsing v5 API](https://developers.google.com/safe-browsing/reference/rest/v5/urls/search) and its [usage overview](https://developers.google.com/safe-browsing/reference).
 
 ## Setup procedure
 
@@ -70,7 +70,7 @@ Keep this Terminal window open. The key is read from the environment and is not 
 
 1. Open a sample page at `http://127.0.0.1:8000/site-warning.html`, or open a regular HTTP/HTTPS website.
 2. Click the AI WebShield extension icon.
-3. Review the privacy note and choose **Scan this page**.
+3. The page scan starts automatically. Open the extension popup and choose **Rescan this page** if you want to run it again.
 4. Review the result in the popup and the round signal at the bottom-right of the page. Red warnings offer **Go back** and **Report this site** actions.
 5. To try the form privacy review, scan first, then enter synthetic test values and submit the sample form.
 6. When finished, stop the server with **Ctrl+C**.
@@ -82,16 +82,16 @@ The sample pages contain fictional example addresses for teaching. The scanner c
 - **Why is the reputation result unknown?** Check that `server.py` is running and that `GOOGLE_SAFE_BROWSING_API_KEY` is set in the same Terminal session. Local page rules still work when reputation lookup is unavailable.
 - **Why can’t Chrome scan this page?** Chrome restricts extension access to internal browser pages and some protected pages. Try a regular `http://` or `https://` tab, click the extension, and start the scan there.
 - **Why do I get a 404 for a sample page?** Start `python3 server.py` from the repository root. It serves the `samples/` folder automatically. If port 8000 is already in use, stop the other server with **Ctrl+C** first.
-- **Why doesn’t the privacy prompt appear?** Click the extension and scan that page before submitting a form. The extension injects its page checks only after you request a scan.
+- **Why doesn’t the privacy prompt appear?** The privacy prompt is separate from automatic site-risk scanning. Submit a form with synthetic test values that match one of the privacy rules to see it.
 - **How do I apply an extension code change?** Open `chrome://extensions`, click the extension’s reload icon, and reload the webpage.
 
 ## Privacy and limitations
 
-- The page-risk rules inspect page text and form metadata locally; they do not read typed form values. Password values are never read.
+- The extension runs on ordinary web pages you visit. Page-risk rules inspect page text and form metadata locally; they do not read typed form values. Password values are never read.
 - The separate form privacy prompt reads supported non-password field values only when a form is submitted, to suggest a mask. It does not send or persist those values.
 - The sanitized URL path and hostname are sent to Google Safe Browsing when an API key is configured. Long token-like path segments, query strings, and fragments are removed first.
 - The rules can produce false alarms and miss threats. Reputation data also may not include every unsafe page. A clean result is not a safety guarantee.
-- This prototype reports risk but does not block navigation, continuously monitor tabs, or scan pages before the user requests it.
+- This prototype reports risk but does not block navigation. Automatic scans run at page load; they do not continuously re-scan a page after it changes.
 
 ## Project contents
 
